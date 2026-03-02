@@ -66,12 +66,17 @@ For large runs, prefer CSV or Parquet input/output over Excel for speed and memo
 
 ## 📁 Project Structure
 ```text
+
 GED_EDA_Project/
 ├── data/
-│   ├── raw_sample/       # Original sample files (input)
-│   └── processed/        # Output report + cleaned files
-├── notebooks/            # EDA and cleaning notebooks
-├── sql/                  # SQL scripts for extraction/sampling
-├── requirements.txt      # Dependencies
+│   ├── raw_sample/                 # Original sample files (input)
+│   ├── processed/                  # Cleaned outputs + reports generated from cleaning 
+│   └── 2. Outliers+Distribution/   # Outputs from outlier detection + distribution 
+├── notebooks/
+│   ├── missing_value_handler.ipynb # Step 1: missing-value handling + cleaned datasets 
+│   └── 2. Outlier_detecting.ipynb  # Step 2: outlier detection (IQR rule) + distribution 
+├── sql/                            # SQL scripts for extraction/sampling
+├── requirements.txt                # Dependencies
 └── README.md
+
 ```
