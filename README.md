@@ -29,25 +29,37 @@ The notebook:
 
 ### Outlier Detection & Distribution Checks
 - **Notebook: notebooks/2. Outlier_detecting.ipynb
-	•	Inputs (from the missing-value step):data/processed/candidate_cleaned.xlsx ; data/processed/test_cleaned.xlsx
-	•	Outlier detection (IQR rule, k = 3.0):
-	•	Apply an IQR-based rule to all numeric columns in both tables.
-	•	Use k = 3.0 (chosen because k = 1.5 removed >10% rows, which was too aggressive).
-	•	Outputs (row-level outlier flags):data/outliers/candidate_outliers_k3.csv ; data/outliers/test_outliers_k3.csv
-	•	Outputs (datasets after outlier removal):data/processed/candidate_cleaned_no_outliers_k3.xlsx; data/processed/test_cleaned_no_outliers_k3.xlsx
-	•	Distribution checks (after outlier removal):
-	•	Generate numeric distribution summaries:
-	•	data/outliers/candidate_numeric_distribution_summary_k3.csv
-	•	data/outliers/test_numeric_distribution_summary_k3.csv
-	•	Produce histograms and boxplots for each numeric variable to visually inspect:
-	•	distribution shape after removal
-	•	whether any extreme values still remain
-	•	Removal ratio summary:
-	•	Report (for both candidate and test tables):
-	•	total rows before removal
-	•	number of rows removed
-	•	% removed under k = 3.0
+	- ⭐️Inputs (from the missing-value step):data/processed/candidate_cleaned.xlsx ; data/processed/test_cleaned.xlsx
+	- ⭐️Outlier detection (IQR rule, k = 3.0):
+	- Apply an IQR-based rule to all numeric columns in both tables.
+	- Use k = 3.0 (chosen because k = 1.5 removed >10% rows, which was too aggressive).
+    - ⭐️Outputs (row-level outlier flags):data/outliers/candidate_outliers_k3.csv ; data/outliers/test_outliers_k3.csv
+    - ⭐️Outputs (datasets after outlier removal):data/processed/candidate_cleaned_no_outliers_k3.xlsx; data/processed/test_cleaned_no_outliers_k3.xlsx
+- **Distribution checks (after outlier removal):Generate numeric distribution summaries:data/outliers/candidate_numeric_distribution_summary_k3.csv ; data/outliers/test_numeric_distribution_summary_k3.csv
+	- Produce histograms and boxplots for each numeric variable to visually inspect after removal.
 
+- **Result Understanding: Outlier removal summary and choice of k=3
+We experimented with two IQR thresholds for outlier detection:
+- **Initial run (k = 1.5)**  
+  - **Candidate table**  
+    - Total rows before: 5,000  
+    - Rows removed as outliers: 148  
+    - Percentage removed: **2.96%**  
+  - **Test table**  
+    - Total rows before: 27,830  
+    - Rows removed as outliers: 2,861  
+    - Percentage removed: **10.28%**  [10% is too big, so we used k=3]
+While the candidate table removal rate was moderate, removing more than 10% of the test records was considered too aggressive for this dataset. This would risk discarding many potentially informative observations.
+- **Final choice (k = 3.0)**  
+  - **Candidate table**  
+    - Total rows before: 5,000  
+    - Rows removed as outliers: 51  
+    - Percentage removed: **1.02%**  
+  - **Test table**  
+    - Total rows before: 27,830  
+    - Rows removed as outliers: 2,135  
+    - Percentage removed: **7.67%**  
+Using **k = 3.0** provides a more conservative outlier definition: it still removes extreme values but keeps a larger portion of the data, especially in the test table. The downstream “no-outlier” datasets and distribution checks in this project are therefore based on the **k = 3.0** configuration.
 
 ## ⚙️ Large dataset guidance (3M+ rows)
 For large runs, prefer CSV or Parquet input/output over Excel for speed and memory efficiency.
