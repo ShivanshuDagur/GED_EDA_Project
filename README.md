@@ -27,6 +27,28 @@ The notebook:
   - Fill status flags (`FIRST_COMPLETE`, `FIRST_PASSED`, `MAKE_COMPLETE`, `MAKE_PASSED`) with `0`.
   - Keep `RESULT_ID`, `SCORE`, and `EXAM_START` values as-is and add `*_MISSING` indicator columns.
 
+### Outlier Detection & Distribution Checks
+- **Notebook: notebooks/2. Outlier_detecting.ipynb
+	•	Inputs (from the missing-value step):data/processed/candidate_cleaned.xlsx ; data/processed/test_cleaned.xlsx
+	•	Outlier detection (IQR rule, k = 3.0):
+	•	Apply an IQR-based rule to all numeric columns in both tables.
+	•	Use k = 3.0 (chosen because k = 1.5 removed >10% rows, which was too aggressive).
+	•	Outputs (row-level outlier flags):data/outliers/candidate_outliers_k3.csv ; data/outliers/test_outliers_k3.csv
+	•	Outputs (datasets after outlier removal):data/processed/candidate_cleaned_no_outliers_k3.xlsx; data/processed/test_cleaned_no_outliers_k3.xlsx
+	•	Distribution checks (after outlier removal):
+	•	Generate numeric distribution summaries:
+	•	data/outliers/candidate_numeric_distribution_summary_k3.csv
+	•	data/outliers/test_numeric_distribution_summary_k3.csv
+	•	Produce histograms and boxplots for each numeric variable to visually inspect:
+	•	distribution shape after removal
+	•	whether any extreme values still remain
+	•	Removal ratio summary:
+	•	Report (for both candidate and test tables):
+	•	total rows before removal
+	•	number of rows removed
+	•	% removed under k = 3.0
+
+
 ## ⚙️ Large dataset guidance (3M+ rows)
 For large runs, prefer CSV or Parquet input/output over Excel for speed and memory efficiency.
 
