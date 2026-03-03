@@ -33,9 +33,9 @@ The notebook:
 	- ⭐️Outlier detection (IQR rule, k = 3.0):
 	- Apply an IQR-based rule to all numeric columns in both tables.
 	- Use k = 3.0 (chosen because k = 1.5 removed >10% rows, which was too aggressive).
-    - ⭐️Outputs (row-level outlier flags):data/outliers/candidate_outliers_k3.csv ; data/outliers/test_outliers_k3.csv
-    - ⭐️Outputs (datasets after outlier removal):data/processed/candidate_cleaned_no_outliers_k3.xlsx; data/processed/test_cleaned_no_outliers_k3.xlsx
-- **Distribution checks (after outlier removal):Generate numeric distribution summaries:data/outliers/candidate_numeric_distribution_summary_k3.csv ; data/outliers/test_numeric_distribution_summary_k3.csv
+    - ⭐️Outputs (row-level outlier flags):2.candidate_outliers removed_k=3.csv ; 2.test_ outliers removed_k=3.csv
+    - ⭐️Outputs (datasets after outlier removal):2.candidate_after missing value.csv & outliers detectors; 2.test_after missing value & outliers detectors.csv
+- **Distribution checks (after outlier removal):2.candidate_numeric distribution summary k=3.csv ; 2.test_numeric distribution summary k=3.csv
 	- Produce histograms and boxplots for each numeric variable to visually inspect after removal.
 
 - **Result Understanding: Outlier removal summary and choice of k=3
