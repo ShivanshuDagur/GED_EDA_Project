@@ -61,7 +61,7 @@ While the candidate table removal rate was moderate, removing more than 10% of t
     - Percentage removed: **7.67%**  
 Using **k = 3.0** provides a more conservative outlier definition: it still removes extreme values but keeps a larger portion of the data, especially in the test table. The downstream “no-outlier” datasets and distribution checks in this project are therefore based on the **k = 3.0** configuration.
 
-## Data Analysis
+## Qualitative to Quantitative Data Analysis
 
 **Output Notebook:**
 * '4_test_candidate_cleaned_qual_2_quant.xlsx`
