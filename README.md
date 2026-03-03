@@ -162,6 +162,34 @@ The notebook:
    * High School Diploma from Another Country (HIGH_SCHOOL_DIPLOMA_FROM_ANOTHER_COUNTRY) = `6`
    * Unknown = `0`
 
+
+## 5. Final Data Cleaning and Type Fixing
+
+**Output Notebook:** 
+`5_test_candidate_cleaned_final.csv`
+
+The notebook:
+1. Loads the merged candidate and test data from `4_test_candidate_cleaned_qual_2_quant.xlsx`.
+2. Standardize formats, correct data types(), and implementing robust cleaning rules for free-form text fields.
+3. Writes the transformed dataset to `5_test_candidate_cleaned_final.csv`.
+
+### **Data Preprocessing Steps:**
+
+* **Encoding and Null Handling**
+    * Unified various text-based null indicators (e.g., `"NULL"`, `"No street address available"`, `"NA"`) into standard `NaN` values to ensure consistent missing data treatment.
+
+* **Date and Type Standardization**
+    * **Date Parsing**: Converted `ACCOUNT_SETUP_COMPLETE_DATE` and `CREDENTIAL_DATE` into formal `datetime64[ns]` objects for time-series compatibility.
+    * **Type Fixing**: Forced `CANDIDATE_ID`, `RESULT_ID`, and `TEST_CENTER_ID` to **String** format to prevent ID truncation or accidental scientific notation (e.g., `4.33E+06`).
+
+* **Free-form Zip Code Cleaning**
+    * Implemented a custom Regex-based logic to standardize `ZIP` and `T_POSTAL_CODE` fields.
+    * **Cleaning Logic**:
+        * **Noise Removal**: Strips all non-numeric characters (e.g., `"ls-12345"` → `"12345"`).
+        * **Length Filtering**: Entries with $\le 2$ digits are discarded as invalid noise.
+        * **Zero Padding**: 3 to 4-digit entries are padded with leading zeros (e.g., `"530"` → `"00530"`) to recover lost prefixes from Excel formatting.
+        * **Standardization**: All valid entries are truncated to a fixed 5-digit format.
+
 ## ⚙️ Large dataset guidance (3M+ rows)
 For large runs, prefer CSV or Parquet input/output over Excel for speed and memory efficiency.
 
