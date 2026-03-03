@@ -163,7 +163,7 @@ The notebook:
    * Unknown = `0`
 
 
-## 5. Final Data Cleaning and Type Fixing
+## Final Data Cleaning and Type Fixing
 
 **Output Notebook:** 
 `5_test_candidate_cleaned_final.csv`
