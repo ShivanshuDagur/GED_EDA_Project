@@ -221,7 +221,7 @@ cat("Remaining features:", paste(final_vars, collapse=", "), "\n")
 # k_prototypes metrics
 ```{r}
 cluster_df <- candidates %>%
-  select(all_of(clustering_vars)) %>%
+  select(all_of(final_vars)) %>%
   mutate(across(where(is.numeric), ~replace_na(.x, mean(.x, na.rm = TRUE))))
   
 # standardize data
