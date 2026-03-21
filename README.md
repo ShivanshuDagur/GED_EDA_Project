@@ -191,7 +191,7 @@ The notebook:
         * **Standardization**: All valid entries are truncated to a fixed 5-digit format.
 
 ## **Data Analysis Steps:**
-### **1.Clustering Analysis ** 
+* **1.Clustering Analysis**
 Input: 5_test_candidate_cleaned_final.csv  
 Output: K=4  
 
