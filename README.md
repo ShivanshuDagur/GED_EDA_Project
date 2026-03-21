@@ -190,6 +190,74 @@ The notebook:
         * **Zero Padding**: 3 to 4-digit entries are padded with leading zeros (e.g., `"530"` → `"00530"`) to recover lost prefixes from Excel formatting.
         * **Standardization**: All valid entries are truncated to a fixed 5-digit format.
 
+### **Data Analysis Steps:**
+* **1. Clustering Analysis
+Input: 5_test_candidate_cleaned_final.csv
+Output: K=4
+
+Final cluster sizes:
+1 415
+2 1118
+3 1667
+4 497
+
+Cluster 1: High-performing, credentialed candidates with low use of support resources. They tended to pass quickly,
+had very few retakes, and rarely used GED Ready or online testing.
+Cluster 2: High-performing, credentialed candidates with high use of support resources. Their outcomes were still
+strong, but they relied more on GED Ready, prep centers, and repeated attempts.
+Cluster 3: Lower-performing, non-credentialed candidates with high support usage. They frequently used GED Ready
+and prep centers, but these supports did not fully translate into credential completion.
+Cluster 4: Lowest-performing, non-credentialed candidates with low support usage. They showed weak outcomes,
+little use of preparation resources, and low retake intensity, making them the most at-risk group.
+  
+* **2. Topic 1: GED Candidate Profile Analysis - Davey
+
+* **3. Topic 2: GED Candidate Profile Analysis - Ankit
+
+    * **3.1 Question: ‘Do regions with fewer testing or preparation resources also show lower GED exam participation or lower GED completion?’
+    * **3.2 Key Takeaways:
+        * **3.2.1 Exam participation changes little across states, but completion rate varies much more across states, implying that resource differences do not seem to strongly affect whether candidates take an exam, but impact their completion rate.
+        * **3.2.2 Logit model 1&2 show that testing-center availability does not significantly affect exam-taking, but it does significantly improve the likelihood of GED completion.
+        * **3.2.3 Prep-related resource measures are not statistically significant in the main completion model.
+
+    * **3.3 Metrics: 
+        * **Counts are derived from the cleaned exam-candidate file and rolled up to each candidate’s home state (C_STATE).
+        * **•	n_testing_centers: number of distinct testing centers
+        * **•	n_candidates: number of distinct candidates
+        * **•	n_prep_center_users: candidates with a non-missing prep-center identifier
+        * **•	n_exam_takers: candidates with at least one exam signal (RESULT_ID, EXAM_START, or SCORE non-missing)
+        * **•	n_completers: candidates with a credential date or ENROLLMENT_STATUS equal to 4
+        * **State-level metrics
+        * **•	center_density = n_testing_centers / n_candidates (testing centers per candidate in the state)
+        * **•	prep_coverage = n_prep_center_users / n_candidates (share of candidates using a prep center)
+        * **•	enrollment_rate = n_exam_takers / n_candidates (share taking at least one GED exam)
+        * **•	completion_rate = n_completers / n_candidates (share earning the GED credential)
+        * **•	prep_center_density = n_prep_centers / n_candidates (distinct prep-center IDs per candidate, from prep-center supply merged at state level)
+
+    * **3.4.1 Logit Model 1 — Enrollment (no significant coefficients in the result)
+logit P(has_exam_attempt_i=1) = β₀ + β₁·center_density + β₂·prep_coverage + β₃·prep_center_density + β₄·age + Σ controls + region FE + quarter FE
+•	where controls include:
+•	GENDER
+•	LAST_YEAR_INCOME
+•	HIGHEST_GRADE_COMPLETED
+•	ETHNICITY
+•	TESTING_REASON
+•	LANGUAGE_CODE
+
+    * **3.4.2 Logit Model 2 — Completion (only the center_density is significant in the result)
+logit P(is_completer_i=1) = β₀ + β₁·center_density + β₂·prep_coverage + β₃·prep_center_density + β₄·age + Σ controls + region FE + quarter FE
+•	where controls include:
+•	GENDER
+•	LAST_YEAR_INCOME
+•	HIGHEST_GRADE_COMPLETED
+•	ETHNICITY
+•	TESTING_REASON
+•	LANGUAGE_CODE
+
+
+* 
+* ...
+* **Encoding and Null Handling**
 ## ⚙️ Large dataset guidance (3M+ rows)
 For large runs, prefer CSV or Parquet input/output over Excel for speed and memory efficiency.
 
