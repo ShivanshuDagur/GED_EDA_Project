@@ -191,22 +191,38 @@ The notebook:
 
 ## **Exploratory Analysis:**
 The dataset used is candidate level with test data aggregated for each candidate.
-**1.Candidate Journey Funnel Metrics**
-These metrics track how candidates progress through the GED process, from enrollment to earning a credential.
-Total Students (after preprocessing and removing outliers and candidates with less than 70% demographics)- 3697
-* attempted_one_official: # Candidates who attempted at least one official GED exam
-* attempted_all: # Candidates who attempted all official GED exams
-* credentialed_students: # Candidates who passed all exams and earned credentials
-* official_exam_participation_rate: % Enrolled candidates who attempted least one official subject exam.
-* full_participation_rate: % Enrolled candidates who attempted all four subject exams.
-* completion_rate: % Enrolled candidates who earned the GED credential.
-* **Insights***: The above graph shows a sharp drop-off between "Participated in All GED Subject Exams" (61.4%) and "Credential Earned" (41.5%) : ~20-point gap.This hints that completing exams doesn't guarantee passing, which our clusters later explain: Clusters 3 and 4 are the candidates who fell into that gap, with lower avg scores (146 and 145) and 0% credential rates despite exam participation.
-**2.GED Ready Sub-Funnel Metrics**
-* total_ged_ready: # Candidates who took GED Ready
-* completed_all_from_ready: # Candidates who took GED Ready and attempted all exams
-* credentialed_from_ready: # Candidates who took GED Ready and earned credentials  
-* **Insights***: 75.4% used GED Ready, but only 30.3% of total students who used it earned credentials. 
-The clusters explain why : Cluster 1 (high performers, 0% GED Ready usage) earned credentials without it, while Cluster 2 (100% GED Ready usage, 100% credentialed) shows that when high-ability students use support tools, they still succeed.The GED Ready funnel's 30.3% credential rate looks modest overall because it's dragged down by Cluster 3, who used GED Ready heavily but still failed.
+* **1.Candidate Journey Funnel Metrics**
+	These metrics track how candidates progress through the GED process, from enrollment to earning a credential.
+	Total Students (after preprocessing and removing outliers and candidates with less than 70% demographics)- 3697
+	* attempted_one_official: # Candidates who attempted at least one official GED exam
+	* attempted_all: # Candidates who attempted all official GED exams
+	* credentialed_students: # Candidates who passed all exams and earned credentials
+	* official_exam_participation_rate: % Enrolled candidates who attempted least one official subject exam.
+	* full_participation_rate: % Enrolled candidates who attempted all four subject exams.
+	* completion_rate: % Enrolled candidates who earned the GED credential.
+	**Insights**: The above graph shows a sharp drop-off between "Participated in All GED Subject Exams" (61.4%) and "Credential Earned" (41.5%) : ~20-point gap.This hints that completing exams doesn't guarantee passing, which our clusters later explain: Clusters 3 and 4 are the candidates who fell into that gap, with lower avg scores (146 and 145) and 0% credential rates despite exam participation.
+* **2.GED Ready Sub-Funnel Metrics**
+	* total_ged_ready: # Candidates who took GED Ready
+	* completed_all_from_ready: # Candidates who took GED Ready and attempted all exams
+	* credentialed_from_ready: # Candidates who took GED Ready and earned credentials  
+	**Insights**: 75.4% used GED Ready, but only 30.3% of total students who used it earned credentials. 
+	The clusters explain why : Cluster 1 (high performers, 0% GED Ready usage) earned credentials without it, while Cluster 2 (100% GED Ready usage, 100% credentialed) shows that when high-ability students use support tools, they still succeed.The GED Ready funnel's 30.3% credential rate looks modest overall because it's dragged down by Cluster 3, who used GED Ready heavily but still failed.
+* **3.Subject-wise Analysis**:
+	**Insights**:
+	  	* Math is the hardest subject — its curve peaks closest to the 145 pass threshold and has the largest left tail below 145, meaning more candidates fail Math than any other subject.
+		* Science and Social Studies skew higher — both curves peak to the right of the pass line, indicating candidates generally perform better in these subjects.
+		* Reasoning has the widest spread — its flatter, broader curve means candidate performance in Reasoning is the most variable — some score very high, others very low.
+		* All subjects cluster near the pass threshold — no subject shows a distribution comfortably above 145, confirming that passing is a close call across the board for most candidates.
+ * **Prep Usage Analysis**:
+   	**Insights**:
+		* Online Video is the only resource with a clear positive signal
+		It's the standout across both charts - users score 3.5 points higher (153.0 vs 149.5) and have a 9.7 percentage point higher pass rate (74.2% vs 64.5%). Every other resource shows negligible or negative differences.
+		* Prep Center and Adult Ed Class users actually score and pass less
+		Both charts show the same counterintuitive pattern - candidates who used these resources perform slightly worse than those who didn't. This likely reflects selection bias: struggling candidates are more likely to seek out structured support, so the resource didn't cause lower performance - it attracted lower performers.
+		* GED Ready and Books show near-zero impact on avg score
+		The score differences are under 1 point in both cases, suggesting these resources alone don't meaningfully move the needle on raw performance.
+		* Overall differences are narrow across all resources
+		All bars in both charts sit within a very tight band - roughly 148–153 for scores and 64–74% for pass rates. No single resource dramatically separates users from non-users, suggesting that resource usage alone is not the primary driver of performance and other factors (prior education, number of retakes, demographics) likely matter more. 
 ## **Data Analysis Steps:**
 * **1.Clustering Analysis**
     Input: 5_test_candidate_cleaned_final.csv  
