@@ -201,13 +201,13 @@ The notebook:
     3 1667  
     4 497  
 
-    Cluster 1: High-performing, credentialed candidates with low use of support resources. They tended to pass quickly,
+    Cluster 1: **High Achievers - No Prep Center** High-performing, credentialed candidates with low use of support resources. They tended to pass quickly,
 had very few retakes, and rarely used GED Ready or online testing.  
-    Cluster 2: High-performing, credentialed candidates with high use of support resources. Their outcomes were still
+    Cluster 2: **Strong Performers - Online Heavy** High-performing, credentialed candidates with high use of support resources. Their outcomes were still
 strong, but they relied more on GED Ready, prep centers, and repeated attempts.  
-    Cluster 3: Lower-performing, non-credentialed candidates with high support usage. They frequently used GED Ready
+    Cluster 3: **Solid Performers - Prep Supported** Lower-performing, non-credentialed candidates with high support usage. They frequently used GED Ready
 and prep centers, but these supports did not fully translate into credential completion.  
-    Cluster 4: Lowest-performing, non-credentialed candidates with low support usage. They showed weak outcomes,
+    Cluster 4: **Developing Learners - No GED Ready** Lowest-performing, non-credentialed candidates with low support usage. They showed weak outcomes,
 little use of preparation resources, and low retake intensity, making them the most at-risk group.  
   
 * **2. Topic 1: GED Candidate Profile Analysis - Davey**
