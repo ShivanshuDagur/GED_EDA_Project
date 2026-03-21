@@ -212,15 +212,15 @@ little use of preparation resources, and low retake intensity, making them the m
   
 * **2. Topic 1: GED Candidate Profile Analysis - Davey**
 
-* **3. Topic 2: GED Candidate Profile Analysis - Ankit**
+* **3. Topic 2: GED Candidate Profile Analysis - Ankit**  
 
-    * **3.1 Question: ‘Do regions with fewer testing or preparation resources also show lower GED exam participation or lower GED completion?’**  
-    * **3.2 Key Takeaways:**
+    * **3.1 Question: ‘Do regions with fewer testing or preparation resources also show lower GED exam participation or lower GED completion?’**    
+    * **3.2 Key Takeaways:**  
         3.2.1 Exam participation changes little across states, but completion rate varies much more across states, implying that resource differences do not seem to strongly affect whether candidates take an exam, but impact their completion rate.  
         3.2.2 Logit model 1&2 show that testing-center availability does not significantly affect exam-taking, but it does significantly improve the likelihood of GED completion.  
         3.2.3 Prep-related resource measures are not statistically significant in the main completion model.  
 
-    * **3.3 Metrics:** 
+    * **3.3 Metrics:**   
         Counts are derived from the cleaned exam-candidate file and rolled up to each candidate’s home state (C_STATE).  
         •	n_testing_centers: number of distinct testing centers  
         •	n_candidates: number of distinct candidates  
@@ -233,7 +233,7 @@ little use of preparation resources, and low retake intensity, making them the m
         •	completion_rate = n_completers / n_candidates (share earning the GED credential)  
         •	prep_center_density = n_prep_centers / n_candidates (distinct prep-center IDs per candidate, from prep-center supply merged at state level)  
 
-    * **3.4.1 Logit Model 1 — Enrollment (no significant coefficients in the result)**  
+    * **3.4.1 Logit Model 1 — Enrollment (no significant coefficients in the result)**    
 logit P(has_exam_attempt_i=1) = β₀ + β₁·center_density + β₂·prep_coverage + β₃·prep_center_density + β₄·age + Σ controls + region FE + quarter FE  
 •	where controls include:  
 •	GENDER  
@@ -243,7 +243,7 @@ logit P(has_exam_attempt_i=1) = β₀ + β₁·center_density + β₂·prep_cove
 •	TESTING_REASON  
 •	LANGUAGE_CODE  
 
-    * **3.4.2 Logit Model 2 — Completion (only the center_density is significant in the result)**
+    * **3.4.2 Logit Model 2 — Completion (only the center_density is significant in the result)**  
 logit P(is_completer_i=1) = β₀ + β₁·center_density + β₂·prep_coverage + β₃·prep_center_density + β₄·age + Σ controls + region FE + quarter FE  
 •	where controls include:  
 •	GENDER  
