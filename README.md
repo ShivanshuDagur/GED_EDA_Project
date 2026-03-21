@@ -213,7 +213,7 @@ little use of preparation resources, and low retake intensity, making them the m
 * **2. Topic 1: GED Candidate Profile Analysis - Davey**
 ...
   
-* **3. Topic 2: GED Candidate Profile Analysis - Ankit**  
+* **3. Topic 2: Regional Rescources Disparities -> enrollment rate and completion rate - Ankit**  
 
     * **3.1 Question:**   
         Do regions with fewer testing or preparation resources also show lower GED exam participation or lower GED completion?’ 
