@@ -190,8 +190,8 @@ The notebook:
         * **Zero Padding**: 3 to 4-digit entries are padded with leading zeros (e.g., `"530"` → `"00530"`) to recover lost prefixes from Excel formatting.
         * **Standardization**: All valid entries are truncated to a fixed 5-digit format.
 
-### **Data Analysis Steps:**
-* **1. Clustering Analysis
+## **Data Analysis Steps:**
+### Clustering Analysis
 Input: 5_test_candidate_cleaned_final.csv
 Output: K=4
 
