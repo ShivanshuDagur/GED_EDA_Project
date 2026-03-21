@@ -161,8 +161,7 @@ The notebook:
    * Home Schooled (HOME_SCHOOLED) = `5`
    * High School Diploma from Another Country (HIGH_SCHOOL_DIPLOMA_FROM_ANOTHER_COUNTRY) = `6`
    * Unknown = `0`
-
-
+  
 ## Final Data Cleaning and Type Fixing
 
 **Output Notebook:** 
@@ -190,6 +189,24 @@ The notebook:
         * **Zero Padding**: 3 to 4-digit entries are padded with leading zeros (e.g., `"530"` → `"00530"`) to recover lost prefixes from Excel formatting.
         * **Standardization**: All valid entries are truncated to a fixed 5-digit format.
 
+## **Exploratory Analysis:**
+The dataset used is candidate level with test data aggregated for each candidate.
+**1.Candidate Journey Funnel Metrics**
+These metrics track how candidates progress through the GED process, from enrollment to earning a credential.
+Total Students (after preprocessing and removing outliers and candidates with less than 70% demographics)- 3697
+* attempted_one_official: # Candidates who attempted at least one official GED exam
+* attempted_all: # Candidates who attempted all official GED exams
+* credentialed_students: # Candidates who passed all exams and earned credentials
+* official_exam_participation_rate: % Enrolled candidates who attempted least one official subject exam.
+* full_participation_rate: % Enrolled candidates who attempted all four subject exams.
+* completion_rate: % Enrolled candidates who earned the GED credential.
+* **Insights***: The above graph shows a sharp drop-off between "Participated in All GED Subject Exams" (61.4%) and "Credential Earned" (41.5%) : ~20-point gap.This hints that completing exams doesn't guarantee passing, which our clusters later explain: Clusters 3 and 4 are the candidates who fell into that gap, with lower avg scores (146 and 145) and 0% credential rates despite exam participation.
+**2.GED Ready Sub-Funnel Metrics**
+* total_ged_ready: # Candidates who took GED Ready
+* completed_all_from_ready: # Candidates who took GED Ready and attempted all exams
+* credentialed_from_ready: # Candidates who took GED Ready and earned credentials  
+* **Insights***: 75.4% used GED Ready, but only 30.3% of total students who used it earned credentials. 
+The clusters explain why : Cluster 1 (high performers, 0% GED Ready usage) earned credentials without it, while Cluster 2 (100% GED Ready usage, 100% credentialed) shows that when high-ability students use support tools, they still succeed.The GED Ready funnel's 30.3% credential rate looks modest overall because it's dragged down by Cluster 3, who used GED Ready heavily but still failed.
 ## **Data Analysis Steps:**
 * **1.Clustering Analysis**
     Input: 5_test_candidate_cleaned_final.csv  
