@@ -229,20 +229,20 @@ These metrics track how candidates progress through the GED process, from enroll
 ### 3. Subject-wise Analysis
 
 **Insights:**
-- **Math is the hardest subject** — its curve peaks closest to the 145 pass threshold and has the largest left tail below 145, meaning more candidates fail Math than any other subject.
-- **Science and Social Studies skew higher** — both curves peak to the right of the pass line, indicating candidates generally perform better in these subjects.
-- **Reasoning has the widest spread** — its flatter, broader curve means candidate performance in Reasoning is the most variable — some score very high, others very low.
-- **All subjects cluster near the pass threshold** — no subject shows a distribution comfortably above 145, confirming that passing is a close call across the board for most candidates.
+- **Math is the hardest subject** - its curve peaks closest to the 145 pass threshold and has the largest left tail below 145, meaning more candidates fail Math than any other subject.
+- **Science and Social Studies skew higher** - both curves peak to the right of the pass line, indicating candidates generally perform better in these subjects.
+- **Reasoning has the widest spread** - its flatter, broader curve means candidate performance in Reasoning is the most variable — some score very high, others very low.
+- **All subjects cluster near the pass threshold** - no subject shows a distribution comfortably above 145, confirming that passing is a close call across the board for most candidates.
 
 ---
 
 ### 4. Prep Usage Analysis
 
 **Insights:**
-- **Online Video is the only resource with a clear positive signal** — users score 3.5 points higher (153.0 vs 149.5) and have a 9.7 percentage point higher pass rate (74.2% vs 64.5%). Every other resource shows negligible or negative differences.
-- **Prep Center and Adult Ed Class users actually score and pass less** — this likely reflects selection bias: struggling candidates are more likely to seek out structured support, so the resource didn't cause lower performance — it attracted lower performers.
-- **GED Ready and Books show near-zero impact on avg score** — the score differences are under 1 point in both cases, suggesting these resources alone don't meaningfully move the needle on raw performance.
-- **Overall differences are narrow across all resources** — all bars sit within a very tight band (roughly 148–153 for scores and 64–74% for pass rates). No single resource dramatically separates users from non-users, suggesting that resource usage alone is not the primary driver of performance and other factors (prior education, number of retakes, demographics) likely matter more.
+- **Online Video is the only resource with a clear positive signal** - users score 3.5 points higher (153.0 vs 149.5) and have a 9.7 percentage point higher pass rate (74.2% vs 64.5%). Every other resource shows negligible or negative differences.
+- **Prep Center and Adult Ed Class users actually score and pass less** - this likely reflects selection bias: struggling candidates are more likely to seek out structured support, so the resource didn't cause lower performance - it attracted lower performers.
+- **GED Ready and Books show near-zero impact on avg score** - the score differences are under 1 point in both cases, suggesting these resources alone don't meaningfully move the needle on raw performance.
+- **Overall differences are narrow across all resources** - all bars sit within a very tight band (roughly 148–153 for scores and 64–74% for pass rates). No single resource dramatically separates users from non-users, suggesting that resource usage alone is not the primary driver of performance and other factors (prior education, number of retakes, demographics) likely matter more.
   
 ## **Data Analysis Steps:**
 * **1.Clustering Analysis**
