@@ -192,29 +192,31 @@ The notebook:
 
 ## **Data Analysis Steps:**
 * **1.Clustering Analysis**
-Input: 5_test_candidate_cleaned_final.csv  
-Output: K=4  
+    Input: 5_test_candidate_cleaned_final.csv  
+    Output: K=4  
 
-Final cluster sizes:  
-1 415  
-2 1118  
-3 1667  
-4 497  
+    Final cluster sizes:  
+    1 415  
+    2 1118  
+    3 1667  
+    4 497  
 
-Cluster 1: High-performing, credentialed candidates with low use of support resources. They tended to pass quickly,
+    Cluster 1: High-performing, credentialed candidates with low use of support resources. They tended to pass quickly,
 had very few retakes, and rarely used GED Ready or online testing.  
-Cluster 2: High-performing, credentialed candidates with high use of support resources. Their outcomes were still
+    Cluster 2: High-performing, credentialed candidates with high use of support resources. Their outcomes were still
 strong, but they relied more on GED Ready, prep centers, and repeated attempts.  
-Cluster 3: Lower-performing, non-credentialed candidates with high support usage. They frequently used GED Ready
+    Cluster 3: Lower-performing, non-credentialed candidates with high support usage. They frequently used GED Ready
 and prep centers, but these supports did not fully translate into credential completion.  
-Cluster 4: Lowest-performing, non-credentialed candidates with low support usage. They showed weak outcomes,
+    Cluster 4: Lowest-performing, non-credentialed candidates with low support usage. They showed weak outcomes,
 little use of preparation resources, and low retake intensity, making them the most at-risk group.  
   
 * **2. Topic 1: GED Candidate Profile Analysis - Davey**
-
+...
+  
 * **3. Topic 2: GED Candidate Profile Analysis - Ankit**  
 
-    * **3.1 Question: ‘Do regions with fewer testing or preparation resources also show lower GED exam participation or lower GED completion?’**    
+    * **3.1 Question:**   
+        Do regions with fewer testing or preparation resources also show lower GED exam participation or lower GED completion?’ 
     * **3.2 Key Takeaways:**  
         3.2.1 Exam participation changes little across states, but completion rate varies much more across states, implying that resource differences do not seem to strongly affect whether candidates take an exam, but impact their completion rate.  
         3.2.2 Logit model 1&2 show that testing-center availability does not significantly affect exam-taking, but it does significantly improve the likelihood of GED completion.  
