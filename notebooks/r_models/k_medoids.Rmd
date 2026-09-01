@@ -1,0 +1,575 @@
+# =============================================================================
+# GED PERFORMANCE SEGMENTATION — K-MEDOIDS CLUSTERING
+# =============================================================================
+# Goal: Segment candidates using K-Medoids (handling mixed numeric/categorical).
+# This script operates independently but maintains logic consistency with DIANA.
+# =============================================================================
+
+# import k prototypes packages
+```{r}
+required_pkgs <- c("tidyverse", "clustMixType", "scales", "knitr", "RColorBrewer")
+new_pkgs <- required_pkgs[!(required_pkgs %in% installed.packages()[, "Package"])]
+if (length(new_pkgs)) install.packages(new_pkgs, dependencies = TRUE)
+invisible(lapply(required_pkgs, library, character.only = TRUE))
+```
+
+# process preparation (follow DIANA's logic for consistency)
+```{r}
+set.seed(1234)
+
+INPUT_FILE    <- "../../data/processed/5_test_candidate_cleaned_final.csv"
+VAR_THRESHOLD <- 0.15  # Clustering features below this variance are dropped
+COR_THRESHOLD <- 0.80  # If two clustering features correlate above this, the lower-variance one is dropped to reduce redundancy
+COMPLETENESS_THRESHOLD <- 0.70  # Candidates with fewer than this proportion of clustering fields present are removed before clustering to prevent missingness artifact clusters
+```
+
+# load data and build candidtate level dataset
+```{r}
+raw <- read_csv(INPUT_FILE, show_col_types = FALSE)
+candidates <- raw %>%
+  mutate(score_clean = if_else(SCORE_MISSING == 1L, NA_real_, SCORE)) %>%
+  group_by(CANDIDATE_ID) %>%
+  summarise(
+    # --- Performance (used in clustering) ---
+    avg_score          = mean(score_clean, na.rm = TRUE),
+    pass_rate          = mean(if_else(!is.na(score_clean) & score_clean >= 145, 1L, 0L), na.rm = TRUE),
+    college_ready_rate = mean(if_else(!is.na(score_clean) & score_clean >= 165, 1L, 0L), na.rm = TRUE),
+    total_attempts     = n(),
+    avg_retakes        = (n() / n_distinct(EXAM_SUBJECT)) - 1,
+    credential_earned  = as.integer(any(!is.na(CREDENTIAL_DATE))),
+    
+    # Subject scores — NA when that subject was never attempted
+    # Encoding: Math=1, Science=2, Reasoning=3, Social Studies=4
+    score_math           = mean(score_clean[EXAM_SUBJECT == 1], na.rm = TRUE),
+    score_science        = mean(score_clean[EXAM_SUBJECT == 2], na.rm = TRUE),
+    score_reasoning      = mean(score_clean[EXAM_SUBJECT == 3], na.rm = TRUE),
+    score_social_studies = mean(score_clean[EXAM_SUBJECT == 4], na.rm = TRUE),
+    
+    # --- Delivery (used in clustering) ---
+    pct_online     = mean(as.integer(ON_VUE == 1), na.rm = TRUE),
+    used_ged_ready = as.integer(any(GED_READY == 1, na.rm = TRUE)),
+    has_prep_center = as.integer(first(PREP_CENTER) != "UNKNOWN"),
+    
+    # --- Preparation (not used in clustering) ---
+    studied_for_ged          = first(STUDIED_FOR_GED),
+    # Encoding: Work=1, Ed. Gain=2, Personal=3, Military=4, Special=5, Unknown=0
+    testing_reason           = first(TESTING_REASON),
+    # Encoding: Academic=1, Personal=2, Both=3, Neither=4,
+    #           Homeschool=5, Foreign Diploma=6, Unknown=0
+    school_incomplete_reason = first(SCHOOL_INCOMPLETE_REASON),
+    # Encoding: Interested=1, Contacted=2, Enrolled=3,
+    #           Credentialed=4, Dismissed=5, Unknown=0
+    enrollment_status        = first(ENROLLMENT_STATUS),
+    has_prep_center          = as.integer(first(PREP_CENTER) != "UNKNOWN"),
+    study_adult_ed_class     = first(STUDY_HELPFUL_ADULT_EDUCATION_CLASS),
+    study_books              = first(STUDY_HELPFUL_BOOKS_PRINTED_STUDY_MATERIAL),
+    study_online_video       = first(STUDY_HELPFUL_ONLINE_COURSE_VIDEO_STUDY_MATERIALS),
+    
+    # --- Demographics (analysis only — NOT used in clustering) ---
+    # Encoding: Male=1, Female=2, Nonbinary=3, Decline=4, Unknown=0
+    gender           = first(GENDER),
+    # Encoding: English=1, Spanish=2, Unknown=0
+    language_code    = first(LANGUAGE_CODE),
+    # Encoding: Under $5K=1 ... $75K+=8, Unknown=0
+    last_year_income = first(LAST_YEAR_INCOME),
+    # Encoding: PreK-5=1, 6-8=2, 9th=3, 10th=4, 11th=5, 12th=6, Don't Remember=7, Other=8, Never=9, Unknown=0
+    highest_grade    = first(HIGHEST_GRADE_COMPLETED),
+    # Encoding: Non-Hispanic=1, Hispanic=2, Decline=3, Unknown=0
+    ethnicity        = first(ETHNICITY),
+    race_white       = first(WHITE),
+    race_black       = first(AFRICAN_AMERICAN),
+    race_asian       = first(ASIAN),
+    race_native      = first(INDIAN_OR_ALASKAN),
+    race_pacific     = first(HAWAIIAN_OR_PACIFIC),
+    race_declined    = first(RACE_DECLINE),
+    race_none        = first(RACE_NONE),
+    birth_year       = first(BIRTH_YEAR),
+    
+    # --- Geography (analysis only — NOT used in clustering) ---
+    c_state = first(C_STATE),
+    
+    .groups = "drop"
+  ) %>%
+  mutate(
+    across(c(score_math, score_science, score_reasoning, score_social_studies),
+           ~ if_else(is.nan(.x), NA_real_, .x)),
+    
+    # --- Derived demographic labels (analysis only) ---
+    age = 2024 - birth_year,
+    
+    census_region = case_when(
+      c_state %in% c("CT","ME","MA","NH","RI","VT","NJ","NY","PA") ~ "Northeast",
+      c_state %in% c("IL","IN","MI","OH","WI","IA","KS","MN",
+                     "MO","NE","ND","SD")                          ~ "Midwest",
+      c_state %in% c("DE","FL","GA","MD","NC","SC","VA","WV","DC",
+                     "AL","KY","MS","TN","AR","LA","OK","TX")      ~ "South",
+      c_state %in% c("AZ","CO","ID","MT","NV","NM","UT","WY",
+                     "AK","CA","HI","OR","WA")                     ~ "West",
+      TRUE                                                          ~ "Other"
+    ),
+    
+    race_category = case_when(
+      race_declined == 1               ~ "Declined",
+      race_none     == 1               ~ "Not Reported",
+      race_black == 1 & ethnicity == 2 ~ "Black Hispanic",
+      race_black == 1                  ~ "Black Non-Hispanic",
+      ethnicity  == 2                  ~ "Hispanic",
+      race_white == 1                  ~ "White Non-Hispanic",
+      race_asian == 1                  ~ "Asian",
+      race_native == 1                 ~ "Native American",
+      race_pacific == 1                ~ "Pacific Islander",
+      TRUE                             ~ "Multiracial/Other"
+    ),
+    
+    gender_label = case_when(
+      gender == 1 ~ "Male",      gender == 2 ~ "Female",
+      gender == 3 ~ "Nonbinary", gender == 4 ~ "Decline",
+      TRUE ~ "Unknown"
+    ),
+    language_label = case_when(
+      language_code == 1 ~ "English", language_code == 2 ~ "Spanish",
+      TRUE ~ "Unknown"
+    ),
+    income_label = case_when(
+      last_year_income == 1 ~ "Under $5K",    last_year_income == 2 ~ "$5K-$9,999",
+      last_year_income == 3 ~ "$10K-$19,999", last_year_income == 4 ~ "$20K-$29,999",
+      last_year_income == 5 ~ "$30K-$39,999", last_year_income == 6 ~ "$40K-$49,999",
+      last_year_income == 7 ~ "$50K-$74,999", last_year_income == 8 ~ "$75K+",
+      TRUE ~ "Unknown"
+    ),
+    edlevel_label = case_when(
+      highest_grade == 1 ~ "Pre-K to 5th",   highest_grade == 2 ~ "6th-8th",
+      highest_grade == 3 ~ "9th Grade",      highest_grade == 4 ~ "10th Grade",
+      highest_grade == 5 ~ "11th Grade",     highest_grade == 6 ~ "12th Grade",
+      highest_grade == 7 ~ "Don't Remember", highest_grade == 8 ~ "Other",
+      highest_grade == 9 ~ "Never Attended", TRUE ~ "Unknown"
+    ),
+    testing_reason_label = case_when(
+      testing_reason == 1 ~ "Work",         testing_reason == 2 ~ "Education",
+      testing_reason == 3 ~ "Personal",     testing_reason == 4 ~ "Military",
+      testing_reason == 5 ~ "Special Req.", TRUE ~ "Unknown"
+    ),
+    school_incomplete_label = case_when(
+      school_incomplete_reason == 1 ~ "Academic",
+      school_incomplete_reason == 2 ~ "Personal",
+      school_incomplete_reason == 3 ~ "Personal & Academic",
+      school_incomplete_reason == 4 ~ "Neither",
+      school_incomplete_reason == 5 ~ "Home Schooled",
+      school_incomplete_reason == 6 ~ "Foreign Diploma",
+      TRUE ~ "Unknown"
+    ),
+    enrollment_label = case_when(
+      enrollment_status == 1 ~ "Interested", enrollment_status == 2 ~ "Contacted",
+      enrollment_status == 3 ~ "Enrolled",   enrollment_status == 4 ~ "Credentialed",
+      enrollment_status == 5 ~ "Dismissed",  TRUE ~ "Unknown"
+    )
+  )
+```
+
+# remove candidates with no demographic data
+```{r}
+candidates <- candidates %>%
+  mutate(completeness = rowMeans(!is.na(select(., avg_score, pass_rate, pct_online, gender)))) %>%
+  filter(completeness >= COMPLETENESS_THRESHOLD) %>%
+  filter(!(gender == 0 & race_black == 0 & race_white == 0 & ethnicity == 0))
+cat("Candidates after aggregation:", nrow(candidates), "\n")
+```
+
+# feature selection (follow DIANA's logic for consistency)
+```{r}
+# initial variables
+candidate_vars <- c("avg_score", "pass_rate", "college_ready_rate", "avg_retakes", 
+                   "pct_online", "credential_earned", "used_ged_ready", "has_prep_center",
+                   "studied_for_ged", "study_books", "study_online_video")
+
+# filtered by variance
+numeric_data <- candidates %>% select(all_of(candidate_vars)) %>% select(where(is.numeric))
+variances <- sapply(numeric_data, function(x) sd(x, na.rm=T) / abs(mean(x, na.rm=T)))
+protected_var <- "avg_score"
+keep_vars <- names(variances[variances >= VAR_THRESHOLD | names(variances) == protected_var])
+
+# filter by correlation
+cor_mat <- cor(candidates %>% select(all_of(keep_vars)), use = "pairwise.complete.obs")
+high_cor_pairs <- which(abs(cor_mat) > COR_THRESHOLD & upper.tri(cor_mat), arr.ind = TRUE)
+
+to_drop <- c()
+
+if (nrow(high_cor_pairs) > 0) {
+  for (i in 1:nrow(high_cor_pairs)) {
+    var_a <- rownames(cor_mat)[high_cor_pairs[i, 1]]
+    var_b <- colnames(cor_mat)[high_cor_pairs[i, 2]]
+    
+    # delete on variable if both are not already marked for deletion
+    if (!(var_a %in% to_drop) & !(var_b %in% to_drop)) {
+      # if one is avg_score then drop the other, otherwise drop the one with lower variance
+      if (var_a == "avg_score") {
+        to_drop <- c(to_drop, var_b)
+      } else {
+        to_drop <- c(to_drop, var_a)
+      }
+    }
+  }
+}
+final_vars <- setdiff(keep_vars, to_drop)
+drop_vars <- setdiff(candidate_vars, final_vars)
+
+cat("Features deleted:", paste(drop_vars, collapse=", "), "\n")
+cat("Remaining features:", paste(final_vars, collapse=", "), "\n")
+```
+
+# k-Medoids clustering
+```{r}
+cluster_df <- candidates %>%
+  select(all_of(final_vars)) %>%
+  mutate(across(where(is.numeric), ~replace_na(.x, mean(.x, na.rm = TRUE))))
+  
+# standardize data
+cluster_df_scaled <- cluster_df %>%
+  mutate(across(where(is.numeric), ~ as.numeric(scale(.x)))) %>%
+  
+  # transfer binary data into factor for categorical variables
+  mutate(across(any_of(c("credential_earned", "used_ged_ready", "has_prep_center", 
+                         "studied_for_ged", "study_books", "study_online_video")), as.factor))
+
+# Compute gower distance
+library(cluster)
+
+gower_dist <- daisy(cluster_df_scaled, metric = "gower")
+
+# find the best k by Elbow Method
+cat("\ncalculating elbow plot\n")
+
+k_range <- 2:7
+costs <- numeric(length(k_range))
+
+for (i in seq_along(k_range)) {
+  k <- k_range[i]
+  temp_model <- pam(gower_dist, k = k, diss = TRUE)
+  costs[i] <- temp_model$objective[1]
+}
+
+plot(k_range, costs, type = "b", pch = 19, col = "#2166AC",
+     xlab = "Number of Clusters (K)",
+     ylab = "Total Within-cluster Dissimilarity",
+     main = "K-Medoids Elbow Plot")
+
+```
+
+# Silhoutte Analysis
+```{r}
+# --- Silhouette analysis: try k = 2 through 8 ---
+cat("\nComputing silhouette widths for k = 2 through 8 (PAM)...\n")
+cat("This may take a few minutes on large datasets.\n")
+
+sil_results <- map_dfr(2:8, function(k) {
+  pam_k  <- pam(gower_dist, k = k, diss = TRUE)
+  tibble(k = k, avg_silhouette = round(mean(pam_k$silinfo$widths[, 3]), 4))
+})
+
+stat_opt <- sil_results$k[which.max(sil_results$avg_silhouette)]
+
+sil_results %>%
+  mutate(Note = if_else(k == stat_opt, "<-- statistical optimum", "")) %>%
+  kable(format = "simple", col.names = c("k", "Avg Silhouette", "")) %>%
+  print()
+
+cat(sprintf("\nStatistical optimum: k = %d  |  Currently selected: k = %d\n",
+            stat_opt, K))
+
+# --- Silhouette plot ---
+print(
+  ggplot(sil_results, aes(x = k, y = avg_silhouette)) +
+    geom_line(color = "#2166AC", linewidth = 1.3) +
+    geom_point(size = 4.5, color = "#2166AC") +
+
+    # Statistical optimum — grey diamond
+    geom_point(data = filter(sil_results, k == stat_opt),
+               size = 7, shape = 18, color = "grey30") +
+    annotate("text",
+             x     = stat_opt,
+             y     = sil_results$avg_silhouette[sil_results$k == stat_opt],
+             label = sprintf("Statistical optimum\n(k = %d, sil = %.3f)",
+                             stat_opt,
+                             sil_results$avg_silhouette[sil_results$k == stat_opt]),
+             hjust = -0.1, vjust = 0.5, size = 3.2, color = "grey30") +
+
+    # Selected K — red dot (only shown when different from stat_opt)
+    { if (K != stat_opt) list(
+      geom_point(data = filter(sil_results, k == K),
+                 size = 7, shape = 21, fill = "#D6604D",
+                 color = "white", stroke = 2),
+      annotate("text",
+               x     = K,
+               y     = sil_results$avg_silhouette[sil_results$k == K],
+               label = sprintf("Selected\n(k = %d, sil = %.3f)",
+                               K,
+                               sil_results$avg_silhouette[sil_results$k == K]),
+               hjust = 1.1, vjust = -0.3, size = 3.2, color = "#D6604D"),
+      annotate("rect",
+               xmin = min(stat_opt, K) - 0.3, xmax = max(stat_opt, K) + 0.3,
+               ymin = -Inf, ymax = Inf,
+               fill = "#FEE8C8", alpha = 0.35)
+    )
+    } +
+
+    scale_x_continuous(breaks = 2:8) +
+    scale_y_continuous(labels = number_format(accuracy = 0.001)) +
+    labs(
+      title    = "Silhouette Analysis — How Many Clusters? (PAM)",
+      subtitle = sprintf(
+        "Grey diamond = statistical optimum (k = %d)%s\nHigher silhouette = better cluster separation",
+        stat_opt,
+        if (K != stat_opt) sprintf("  |  Red dot = selected k = %d", K) else ""
+      ),
+      x       = "Number of Clusters (k)",
+      y       = "Average Silhouette Width",
+      caption = "Tip: if k = 2 feels too coarse, look for the next local peak"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+      plot.title    = element_text(face = "bold"),
+      plot.subtitle = element_text(color = "grey40", size = 9.5),
+      plot.caption  = element_text(color = "grey50", size = 8.5, face = "italic")
+    )
+)
+
+```
+# Final Model
+```{r}
+K_FINAL <- 6
+pam_k  <- pam(gower_dist, k = K_FINAL, diss = TRUE)
+
+candidates <- candidates %>%
+  mutate(cluster = pam_k$clustering)
+```
+
+# summary table for cluster profiles
+```{r}
+profile <- candidates %>%
+  group_by(cluster) %>%
+  summarise(
+    n               = n(),
+    avg_score       = round(mean(avg_score,          na.rm = TRUE), 1),
+    pass_rate       = round(mean(pass_rate,          na.rm = TRUE), 3),
+    college_ready   = round(mean(college_ready_rate, na.rm = TRUE), 3),
+    credential_pct  = round(mean(credential_earned,  na.rm = TRUE), 3),
+    avg_retakes     = round(mean(avg_retakes,        na.rm = TRUE), 2),
+    pct_online      = round(mean(pct_online,         na.rm = TRUE), 3),
+    pct_ged_ready   = round(mean(used_ged_ready,     na.rm = TRUE), 3),
+    pct_prep_center = round(mean(has_prep_center,    na.rm = TRUE), 3),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(avg_score)) %>%
+  mutate(perf_rank = row_number())
+print(profile)
+```
+
+```{r}
+# ── SECTION 7: NAME CLUSTERS ──────────────────────────────────────────────────
+# Each cluster gets a short two-part name:
+#   Part 1 — Performance tier (ranked by average score, 1 = highest)
+#   Part 2 — The most distinctive preparation or delivery behavior for that
+#             cluster, identified by the largest absolute z-score relative
+#             to the sample mean across clusters.
+#
+# Tier assignments based on observed profiles (K = 6):
+#   Rank 1 (avg 157.5) — Cluster 3: high pass rate, first-attempt, no support
+#   Rank 2 (avg 156.3) — Cluster 4: high pass rate, retakers, 100% credential
+#   Rank 3 (avg 154.4) — Cluster 2: retakers with GED Ready support
+#   Rank 4 (avg 146.8) — Cluster 6: borderline passers, GED Ready users
+#   Rank 5 (avg 145.8) — Cluster 5: borderline passers, prep center users
+#   Rank 6 (avg 141.2) — Cluster 1: below threshold, no support, no credential
+
+# Performance tier names — one per rank up to K
+all_tier_names <- c(
+  "High Achievers",          # rank 1: best scores
+  "Strong Performers",       # rank 2
+  "Solid Performers",        # rank 3
+  "Developing Learners",     # rank 4
+  "Below Average Learners",  # rank 5
+  "Struggling Learners",     # rank 6
+  "At-Risk Candidates",      # rank 7
+  "Critical Needs"           # rank 8: lowest scores
+)
+tier_names <- all_tier_names[1:K_FINAL]
+
+# Trait labels restricted to features that were actually in the clustering
+# model. Study behaviors (studied_for_ged, adult ed, books, online video)
+# are excluded — they are post-hoc observations and must not drive naming.
+# Only pct_online, pct_ged_ready, pct_prep_center, and avg_retakes
+# were clustering inputs alongside the performance outcome features.
+trait_labels_pos <- c(
+  pct_online      = "Online-Heavy",
+  pct_ged_ready   = "GED Ready Users",
+  pct_prep_center = "Prep Supported",
+  avg_retakes     = "High Retakers"
+)
+trait_labels_neg <- c(
+  pct_online      = "In-Person Testers",
+  pct_ged_ready   = "No GED Ready",
+  pct_prep_center = "No Prep Center",
+  avg_retakes     = "First-Attempt Passers"
+)
+
+# Sample-wide averages as baseline for z-score comparison
+# Only includes the four clustering features eligible for naming
+benchmarks <- list(
+  pct_online      = mean(candidates$pct_online,      na.rm = TRUE),
+  pct_ged_ready   = mean(candidates$used_ged_ready,  na.rm = TRUE),
+  pct_prep_center = mean(candidates$has_prep_center, na.rm = TRUE),
+  avg_retakes     = mean(candidates$avg_retakes,     na.rm = TRUE)
+)
+
+cluster_names <- profile %>%
+  mutate(
+    tier  = tier_names[perf_rank],
+    trait = map_chr(seq_len(n()), function(i) {
+      row <- profile[i, ]
+      z_scores <- map_dbl(names(trait_labels_pos), function(feat) {
+        val  <- as.numeric(row[[feat]])
+        avg  <- benchmarks[[feat]]
+        sdev <- sd(profile[[feat]], na.rm = TRUE)
+        if (is.na(sdev) | sdev == 0) return(0)
+        (val - avg) / sdev
+      })
+      names(z_scores) <- names(trait_labels_pos)
+
+      # Pick the feature with the largest absolute z-score
+      best_feat <- names(which.max(abs(z_scores)))
+
+      # Choose the positive or negative label based on direction of z-score
+      if (z_scores[best_feat] >= 0) {
+        trait_labels_pos[best_feat]
+      } else {
+        trait_labels_neg[best_feat]
+      }
+    }),
+    cluster_name = paste0(tier, " — ", trait)
+  ) %>%
+  group_by(cluster_name) %>%
+  mutate(cluster_name = if_else(
+    n() > 1,
+    paste0(cluster_name, " (", row_number(), ")"),
+    cluster_name
+  )) %>%
+  ungroup() %>%
+  select(cluster, cluster_name)
+
+candidates <- left_join(candidates, cluster_names, by = "cluster")
+
+# Print cluster name assignments for review
+cat("\n--- Cluster Name Assignments ---\n")
+candidates %>%
+  count(cluster, cluster_name) %>%
+  arrange(cluster) %>%
+  kable(format = "simple", col.names = c("Cluster", "Name", "N")) %>%
+  print()
+
+# ── SECTION 8: CLUSTER SUMMARY ────────────────────────────────────────────────
+# Tables 1–2 cover the features used in clustering (performance outcomes).
+# Tables 3–4 are post-hoc profiles — these features did not influence the
+# clusters, so any patterns found here are genuine discoveries:
+#   Table 3 — Preparation behaviors (study methods, GED Ready, prep center)
+#   Table 4 — Demographic composition (race, gender, language, geography)
+
+cat("\n=== CLUSTER SUMMARY ===\n")
+
+pct  <- function(x) percent(mean(x, na.rm = TRUE), 0.1)
+avg  <- function(x) round(mean(x, na.rm = TRUE), 1)
+avg2 <- function(x) round(mean(x, na.rm = TRUE), 2)
+
+base_profile <- candidates %>%
+  group_by(Cluster = cluster, Name = cluster_name) %>%
+  summarise(N = n(), .groups = "drop") %>%
+  arrange(Cluster)
+
+# --- Table 1: Performance ---
+cat("\n--- Performance (clustering features) ---\n")
+candidates %>%
+  group_by(Cluster = cluster) %>%
+  summarise(
+    `Avg Score`         = avg(avg_score),
+    `Pass Rate`         = pct(pass_rate),
+    `College Ready`     = pct(college_ready_rate),
+    `Credential Earned` = pct(credential_earned),
+    `Total Attempts`    = avg2(total_attempts),
+    `Avg Retakes`       = avg2(avg_retakes),
+    .groups = "drop"
+  ) %>%
+  left_join(base_profile %>% select(Cluster, Name, N), by = "Cluster") %>%
+  select(Cluster, Name, N, everything()) %>%
+  arrange(Cluster) %>%
+  kable(format = "simple") %>%
+  print()
+
+# --- Table 2: Subject Scores ---
+cat("\n--- Subject Scores (clustering features | passing threshold = 145) ---\n")
+candidates %>%
+  group_by(Cluster = cluster) %>%
+  summarise(
+    `Math`           = avg(score_math),
+    `Science`        = avg(score_science),
+    `Reasoning`      = avg(score_reasoning),
+    `Social Studies` = avg(score_social_studies),
+    .groups = "drop"
+  ) %>%
+  left_join(base_profile %>% select(Cluster, Name), by = "Cluster") %>%
+  select(Cluster, Name, everything()) %>%
+  arrange(Cluster) %>%
+  kable(format = "simple") %>%
+  print()
+
+# --- Table 3: Preparation Behaviors ---
+cat("\n--- Preparation Behaviors (post-hoc — not used in clustering) ---\n")
+candidates %>%
+  group_by(Cluster = cluster) %>%
+  summarise(
+    `Studied for GED`     = pct(studied_for_ged),
+    `Used GED Ready`      = pct(used_ged_ready),
+    `Has Prep Center`     = pct(has_prep_center),
+    `Online Testing`      = pct(pct_online),
+    `Study: Adult Ed`     = pct(study_adult_ed_class),
+    `Study: Books`        = pct(study_books),
+    `Study: Online Video` = pct(study_online_video),
+    .groups = "drop"
+  ) %>%
+  left_join(base_profile %>% select(Cluster, Name), by = "Cluster") %>%
+  select(Cluster, Name, everything()) %>%
+  arrange(Cluster) %>%
+  kable(format = "simple") %>%
+  print()
+
+# --- Table 4: Demographic Profile (post-hoc — NOT used in clustering) ---
+cat("\n--- Demographic Profile (post-hoc observation — not used in clustering) ---\n")
+cat("    These patterns emerged from the data; they were not inputs to the model.\n\n")
+candidates %>%
+  group_by(Cluster = cluster) %>%
+  summarise(
+    `Avg Age`          = avg(age),
+    `Male`             = pct(gender == 1),
+    `Female`           = pct(gender == 2),
+    `Black`            = pct(race_black == 1),
+    `White`            = pct(race_white == 1),
+    `Hispanic`         = pct(ethnicity == 2),
+    `Asian`            = pct(race_asian == 1),
+    `Spanish Lang`     = pct(language_code == 2),
+    `Top Region`       = names(sort(table(census_region), decreasing = TRUE))[1],
+    `Top State`        = names(sort(table(c_state),       decreasing = TRUE))[1],
+    `Income Unknown`   = pct(last_year_income == 0),
+    `Ed: 9th or Below` = pct(highest_grade <= 3 & highest_grade > 0),
+    .groups = "drop"
+  ) %>%
+  left_join(base_profile %>% select(Cluster, Name), by = "Cluster") %>%
+  select(Cluster, Name, everything()) %>%
+  arrange(Cluster) %>%
+  kable(format = "simple") %>%
+  print()
+
+cat(sprintf(
+  "\nPAM complete | Avg Silhouette = %.4f | k = %d | Clustering features = %d\n",
+  mean(pam_k$silinfo$widths[, 3]), K_FINAL,
+  length(retained_numeric) + length(retained_nominal)
+))
+cat("Demographics are post-hoc only and were not used in clustering.\n")
+```
+
